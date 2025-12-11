@@ -6,6 +6,7 @@ class TripAnlegen extends StatefulWidget {
 
   @override
   State<TripAnlegen> createState() => _TripAnlegenState();
+  //TODO: Eingabefelder validieren (bis kann nicht vor von liegen)
 }
 
 class _TripAnlegenState extends State<TripAnlegen> {
