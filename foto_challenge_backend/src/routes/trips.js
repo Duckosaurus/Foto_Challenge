@@ -5,17 +5,17 @@ const router = express.Router();
 
 router.post("/", async (req, res) => {
     console.log('test1');
-    const { name, beschreibung, startdatum, enddatum } = req.body;
+    const { name, beschreibung, startdatum, enddatum, userid } = req.body;
     console.log("req body: ", req.body)
     console.log(name)
 
 
     // SQL-Abfrage für das Einfügen eines neuen Trips
     const query = `
-    INSERT INTO Trip (name, beschreibung, startdatum, enddatum)
-    VALUES ($1, $2, $3, $4) RETURNING *;
+    INSERT INTO Trip (name, beschreibung, startdatum, enddatum, userid)
+    VALUES ($1, $2, $3, $4, $5) RETURNING *;
   `;
-    const values = [name, description, dateFrom, dateTo];
+    const values = [name, beschreibung, startdatum, enddatum, userid];
 
     try {
         console.log("query: ", query)
