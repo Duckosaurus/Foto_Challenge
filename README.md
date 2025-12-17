@@ -8,6 +8,8 @@ docker-compose up -d
 # Backend starten
 node src/app.js
 
+npx nodemon src/app.js
+
 # Frontend starten
 Virtual Emulator starten
 
