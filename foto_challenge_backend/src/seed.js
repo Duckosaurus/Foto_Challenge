@@ -2,11 +2,11 @@
 import { pool } from "./db.js";
 
 export async function runSeed() {
-    const { rowCount } = await pool.query(`SELECT * FROM User;`);
+    const { rowCount } = await pool.query(`SELECT * FROM Benutzer;`);
     if (rowCount === 0) {
         // console.log(rowCount);
         await pool.query(`
-      INSERT INTO "User" (Username, Passwort) VALUES
+      INSERT INTO Benutzer (Username, Passwort) VALUES
     ('Alice', '123'),
     ('Bob', '1234');
 `);
