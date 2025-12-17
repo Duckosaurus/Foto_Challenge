@@ -5,10 +5,12 @@ import { runSeed } from "./seed.js";
 import usersRoute from "./routes/users.js";
 
 const app = express();
-app.use(express.json());
+app.use(bodyParser.json());
 
 // Routen registrieren
 app.use("/users", usersRoute);
+app.use('/trips', tripsRouter);
+
 
 // Startup-Logik
 (async () => {
