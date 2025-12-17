@@ -2,10 +2,10 @@
 import { pool } from "./db.js";
 
 export async function runSeed() {
-    const { rowCount } = await pool.query(`SELECT * FROM users;`);
+    const { rowCount } = await pool.query(`SELECT * FROM user;`);
     if (rowCount === 0) {
         await pool.query(`
-      INSERT INTO users (name, email) VALUES
+      INSERT INTO user (name, email) VALUES
         ('Alice', 'alice@example.com'),
         ('Bob', 'bob@example.com');
     `);

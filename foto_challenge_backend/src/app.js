@@ -2,13 +2,12 @@
 import express from "express";
 import { runMigrations } from "./migrations.js";
 import { runSeed } from "./seed.js";
-import usersRoute from "./routes/users.js";
+import tripsRouter from "./routes/trips.js";
 
 const app = express();
-app.use(bodyParser.json());
+app.use(express.json());
 
 // Routen registrieren
-app.use("/users", usersRoute);
 app.use('/trips', tripsRouter);
 
 

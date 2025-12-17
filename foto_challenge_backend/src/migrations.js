@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS "User" (
 CREATE TABLE IF NOT EXISTS "Trip" (
     ID SERIAL PRIMARY KEY,
     Name VARCHAR(255) NOT NULL,
+    Beschreibung TEXT,
     Startdatum DATE NOT NULL,
     Enddatum DATE NOT NULL,
     UserID INT NOT NULL,
