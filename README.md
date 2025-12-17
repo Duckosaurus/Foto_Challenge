@@ -1,6 +1,8 @@
 # Foto_Challenge
 
 # DB starten
+(Powershell in den Repo Pfad gehen [äußerste])
+
 docker-compose up -d
 
 # Backend starten
