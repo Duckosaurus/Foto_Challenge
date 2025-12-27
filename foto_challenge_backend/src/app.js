@@ -3,13 +3,14 @@ import express from "express";
 import { runMigrations } from "./migrations.js";
 import { runSeed } from "./seed.js";
 import tripsRouter from "./routes/trips.js";
+import authRouter from "./routes/auth.js";
 
 const app = express();
 app.use(express.json());
 
 // Routen registrieren
 app.use('/trips', tripsRouter);
-
+app.use('/auth', authRouter);
 
 // Startup-Logik
 (async () => {
