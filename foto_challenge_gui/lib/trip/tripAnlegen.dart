@@ -40,13 +40,13 @@ class _TripAnlegenState extends State<TripAnlegen> {
   }
 
   Future<String?> sendTripToBackend() async {
-    final url = Uri.parse("http://localhost:3000/trips");
+    final url = Uri.parse("http://10.0.2.2:3000/trips");
     final userId = await UserIdStore.getUserId();
     final body = {
       "name": nameController.text.trim(),
-      "description": descriptionController.text.trim(),
-      "dateFrom": dateFromController.text.trim(),
-      "dateTo": dateToController.text.trim(),
+      "beschreibung": descriptionController.text.trim(),
+      "startdatum": dateFromController.text.trim(),
+      "enddatum": dateToController.text.trim(),
       "userid": userId,
     };
 
@@ -66,6 +66,7 @@ class _TripAnlegenState extends State<TripAnlegen> {
           SnackBar(content: Text("Fehler: ${response.statusCode}")),
         );
         // Debug:
+        print("Hier wird geprintet");
         print(response.body);
       }
     } catch (e) {

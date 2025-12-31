@@ -12,6 +12,7 @@ class MyApp extends StatelessWidget {
 
   Future<bool> _isLoggedIn() async {
     final id = await UserIdStore.getUserId();
+    print("Id bei Login: $id");
     return id != null;
   }
 

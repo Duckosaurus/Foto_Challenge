@@ -19,4 +19,6 @@ app.use('/auth', authRouter);
 })();
 
 const PORT = 3000;
-app.listen(PORT, () => console.log(`Backend läuft auf Port ${PORT}`));
+app.listen(PORT, "0.0.0.0", () => console.log(`Backend läuft auf Port ${PORT}`));
+
+// app.listen(PORT, () => console.log(`Backend läuft auf Port ${PORT}`));

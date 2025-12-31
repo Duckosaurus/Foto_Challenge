@@ -5,9 +5,12 @@
 
 docker-compose up -d
 
+(beenden) docker-compose down
+
 # Backend starten
 node src/app.js
 
+(Für Hotreload)
 npx nodemon src/app.js
 
 # Frontend starten

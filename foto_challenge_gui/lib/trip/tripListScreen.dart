@@ -25,9 +25,10 @@ class _TripListScreenState extends State<TripListScreen> {
   Future<List<dynamic>> fetchTrips() async {
     final userId = await UserIdStore.getUserId();
     if (userId == null) throw Exception("Kein UserId gespeichert.");
-    
-    final url = Uri.parse("http://localhost:3000/trips?userid=$userId");
+
+    final url = Uri.parse("http://10.0.2.2:3000/trips?userid=$userId");
     final res = await http.get(url);
+    print(res.statusCode);
 
     if (res.statusCode == 200) {
       return jsonDecode(res.body) as List<dynamic>;

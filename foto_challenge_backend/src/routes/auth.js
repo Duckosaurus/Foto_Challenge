@@ -9,10 +9,13 @@ const router = express.Router();
  * Response: { userid }
  */
 router.post("/login", async (req, res) => {
+    console.log("zum login gekommen")
     const { username, passwort } = req.body;
 
+    console.log(req.body);
+    console.log(username, " + ", passwort);
     if (!username || !passwort) {
-        return res.status(400).json({ error: "Username und Passwort erforderlich" });
+        return res.status(400).json({ error: "username und passwort erforderlich" });
     }
 
     const query = `
@@ -30,6 +33,7 @@ router.post("/login", async (req, res) => {
 
         const user = result.rows[0];
 
+        console.log('User PW ', user.passwort, " pw geschickt: ", passwort);
         if (user.passwort !== passwort) {
             return res.status(401).json({ error: "Falsches Passwort" });
         }

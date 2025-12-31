@@ -3,11 +3,18 @@ import { pool } from "../db.js";
 
 const router = express.Router();
 
+function toIsoDate(dmy) {
+    if (!dmy) return null;
+    const [d, m, y] = String(dmy).split(".");
+    return `${y}-${m}-${d}`; // 2025-12-24
+}
+
+
 router.post("/", async (req, res) => {
     console.log('test1');
     const { name, beschreibung, startdatum, enddatum, userid } = req.body;
     console.log("req body: ", req.body)
-    console.log(name)
+    // console.log(name)
 
 
     // SQL-Abfrage für das Einfügen eines neuen Trips
@@ -15,10 +22,10 @@ router.post("/", async (req, res) => {
     INSERT INTO Trip (name, beschreibung, startdatum, enddatum, userid)
     VALUES ($1, $2, $3, $4, $5) RETURNING *;
   `;
-    const values = [name, beschreibung, startdatum, enddatum, userid];
+    const values = [name, beschreibung, toIsoDate(startdatum), toIsoDate(enddatum), userid];
 
     try {
-        console.log("query: ", query)
+        console.log("query: ", values)
         const result = await pool.query(query, values);
         console.log("nach querry add");
         res.status(201).json(result.rows[0]); // Gibt den neu angelegten Trip zurück
@@ -30,6 +37,7 @@ router.post("/", async (req, res) => {
 
 
 router.get("/:id", async (req, res) => {
+    console.log("Trip id kommt an")
     const { id } = req.params;
 
     const query = `SELECT * FROM Trip WHERE id = $1;`;
@@ -50,7 +58,7 @@ router.get("/:id", async (req, res) => {
 
 
 router.get("/", async (req, res) => {
-    const { userid } = res.query;
+    const { userid } = req.query;
 
     const query = `SELECT id, name, startdatum
     FROM Trip 
