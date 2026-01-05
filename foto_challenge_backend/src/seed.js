@@ -3,7 +3,7 @@ import { pool } from "./db.js";
 
 export async function runSeed() {
     const benutzerResult = await pool.query(`SELECT * FROM Benutzer;`);
-    if (benutzerResult === 0) {
+    if (benutzerResult.rowCount === 0) {
         // console.log(rowCount);
         await pool.query(`
       INSERT INTO Benutzer (Username, Passwort) VALUES
