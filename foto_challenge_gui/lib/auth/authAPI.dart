@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/apiConfig.dart';
 
 class AuthApi {
   // Android Emulator: 10.0.2.2
-  static const String baseUrl = "http://10.0.2.2:3000/auth";
+  // Web Emulator: localhost
+  static String get baseUrl => "${ApiConfig.baseUrl}/auth";
 
   static Future<int> login({
     required String username,

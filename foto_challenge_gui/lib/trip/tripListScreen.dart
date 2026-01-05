@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
 import 'tripDetail.dart';
 import 'tripAnlegen.dart';
 import '../auth/userIDstore.dart';
+import '../config/apiConfig.dart';
 
 class TripListScreen extends StatefulWidget {
   const TripListScreen({super.key});
@@ -25,8 +25,7 @@ class _TripListScreenState extends State<TripListScreen> {
   Future<List<dynamic>> fetchTrips() async {
     final userId = await UserIdStore.getUserId();
     if (userId == null) throw Exception("Kein UserId gespeichert.");
-
-    final url = Uri.parse("http://10.0.2.2:3000/trips?userid=$userId");
+    final url = Uri.parse("${ApiConfig.baseUrl}/trips?userid=$userId");
     final res = await http.get(url);
     print(res.statusCode);
 

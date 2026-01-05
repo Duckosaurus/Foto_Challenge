@@ -4,9 +4,11 @@ import { runMigrations } from "./migrations.js";
 import { runSeed } from "./seed.js";
 import tripsRouter from "./routes/trips.js";
 import authRouter from "./routes/auth.js";
+import cors from "cors";
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 // Routen registrieren
 app.use('/trips', tripsRouter);
