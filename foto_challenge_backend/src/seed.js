@@ -10,9 +10,9 @@ export async function runSeed() {
     ('Alice', '123'),
     ('Bob', '1234'); `);
 
-        console.log("✔ Testdaten eingefügt");
+        console.log("✔ Benutzer Testdaten eingefügt");
     } else {
-        console.log("✔ Testdaten bereits vorhanden");
+        console.log("✔ Benutzer Testdaten bereits vorhanden");
     }
 
     const tripResult = await pool.query(`SELECT * FROM Trip ;`);
@@ -28,8 +28,8 @@ VALUES (
     1
 ); `);
 
-        console.log("✔ Testdaten eingefügt");
+        console.log("✔ Trip Testdaten eingefügt");
     } else {
-        console.log("✔ Testdaten bereits vorhanden");
+        console.log("✔ Trip Testdaten bereits vorhanden");
     }
 }
