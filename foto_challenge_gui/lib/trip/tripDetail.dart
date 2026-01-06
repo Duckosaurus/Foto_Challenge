@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../config/apiConfig.dart';
 
 class TripDetailScreen extends StatefulWidget {
   final String tripId;
@@ -27,7 +28,9 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
       error = null;
     });
 
-    final url = Uri.parse("http://localhost:3000/trips/${widget.tripId}");
+    final url = Uri.parse("${ApiConfig.baseUrl}/trips/${widget.tripId}");
+
+    // final url = Uri.parse("http://localhost:3000/trips/${widget.tripId}");
 
     try {
       final res = await http.get(url);

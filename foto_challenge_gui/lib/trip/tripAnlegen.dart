@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'tripDetail.dart';
 import '../auth/userIDstore.dart';
+import '../config/apiConfig.dart';
+
 
 class TripAnlegen extends StatefulWidget {
   const TripAnlegen({super.key});
@@ -40,7 +42,10 @@ class _TripAnlegenState extends State<TripAnlegen> {
   }
 
   Future<String?> sendTripToBackend() async {
-    final url = Uri.parse("http://10.0.2.2:3000/trips");
+    
+    final url = Uri.parse("${ApiConfig.baseUrl}/trips");
+
+    // final url = Uri.parse("http://10.0.2.2:3000/trips");
     final userId = await UserIdStore.getUserId();
     final body = {
       "name": nameController.text.trim(),
