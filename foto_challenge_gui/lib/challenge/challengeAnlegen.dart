@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:foto_challenge_gui/config/apiConfig.dart';
 import '../auth/userIDstore.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class ChallengeAnlegen extends StatefulWidget {
   final String tripId;
   const ChallengeAnlegen({super.key, required this.tripId});
-
 
   @override
   State<ChallengeAnlegen> createState() => _ChallengeAnlegenState();
@@ -25,19 +26,52 @@ class _ChallengeAnlegenState extends State<ChallengeAnlegen> {
 
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Bitte alle Felder ausfüllen')),
+        const SnackBar(content: Text('Bitte Challenge Name eingeben')),
       );
       return;
     }
 
     final url = Uri.parse("${ApiConfig.baseUrl}/challenge");
-    final userId = await UserIdStore.getUserId();
+    //final userId = await UserIdStore.getUserId();
     final body = {
       "name": name,
       "beschreibung": "",
       "status": "offen",
-      "tripid": ,
+      "tripid": int.parse(widget.tripId),
     };
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 201) {
+        // optional: Response enthält die neue Challenge inkl. id
+        // final created = jsonDecode(response.body);
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Challenge gespeichert")));
+
+        Navigator.pop(context, true); // ✅ signalisiert „neu angelegt“
+      } else {
+        debugPrint("Fehler: ${response.statusCode}");
+        debugPrint(response.body);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Fehler: ${response.statusCode}")),
+        );
+      }
+    } catch (e) {
+      debugPrint("Netzwerkfehler: $e");
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Netzwerkfehler: $e")));
+    }
   }
 
   @override

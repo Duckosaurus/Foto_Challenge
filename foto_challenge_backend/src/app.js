@@ -4,6 +4,7 @@ import { runMigrations } from "./migrations.js";
 import { runSeed } from "./seed.js";
 import tripsRouter from "./routes/trips.js";
 import authRouter from "./routes/auth.js";
+import challengeRouter from './routes/challenge.js';
 import cors from "cors";
 
 const app = express();
@@ -12,6 +13,7 @@ app.use(cors());
 
 // Routen registrieren
 app.use('/trips', tripsRouter);
+app.use('/challenge', challengeRouter);
 app.use('/auth', authRouter);
 
 // Startup-Logik

@@ -131,7 +131,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: _loading
                     ? null
                     : () {
-                        setState(() => _registerMode = !_registerMode);
+                        setState(() {
+                          _registerMode = !_registerMode;
+
+                          // 👇 Textfelder leeren
+                          _usernameController.clear();
+                          _pwController.clear();
+
+                          // 👇 evtl. alte Fehlermeldungen entfernen
+                          _formKey.currentState?.reset();
+                        });
                       },
                 child: Text(toggleText),
               ),

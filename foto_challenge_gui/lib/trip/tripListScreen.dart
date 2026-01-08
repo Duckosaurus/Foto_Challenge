@@ -5,6 +5,7 @@ import 'tripDetail.dart';
 import 'tripAnlegen.dart';
 import '../auth/userIDstore.dart';
 import '../config/apiConfig.dart';
+import 'package:intl/intl.dart';
 
 class TripListScreen extends StatefulWidget {
   const TripListScreen({super.key});
@@ -42,6 +43,15 @@ class _TripListScreenState extends State<TripListScreen> {
     await _tripsFuture;
   }
 
+  String formatDate(String date) {
+    try {
+      final parsedDate = DateTime.parse(date);
+      return DateFormat('dd.MM.yyyy').format(parsedDate);
+    } catch (e) {
+      return date;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,12 +87,12 @@ class _TripListScreenState extends State<TripListScreen> {
 
                 final id = t["id"].toString();
                 final name = (t["name"] ?? "—").toString();
-                final tripDate = (t["startdatum"] ?? "—")
-                    .toString(); // ✅ Trip-Datum für M–3
+                final tripDate = (t["startdatum"] ?? "—").toString();
+                final formattedStartdatum = formatDate(tripDate);
 
                 return ListTile(
                   title: Text(name),
-                  subtitle: Text("Datum: $tripDate"),
+                  subtitle: Text("Start: $formattedStartdatum"),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
                     Navigator.push(

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../config/apiConfig.dart';
 import 'package:foto_challenge_gui/challenge/challengeAnlegen.dart';
+import 'package:intl/intl.dart';
+import 'package:foto_challenge_gui/challenge/challengeDetailScreen.dart';
 
 class TripDetailScreen extends StatefulWidget {
   final String tripId;
@@ -16,11 +18,13 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
   Map<String, dynamic>? trip;
   bool loading = true;
   String? error;
+  late Future<List<dynamic>> _challengesFuture;
 
   @override
   void initState() {
     super.initState();
     _loadTrip();
+    _challengesFuture = fetchChallenges();
   }
 
   Future<void> _loadTrip() async {
@@ -30,8 +34,6 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     });
 
     final url = Uri.parse("${ApiConfig.baseUrl}/trips/${widget.tripId}");
-
-    // final url = Uri.parse("http://localhost:3000/trips/${widget.tripId}");
 
     try {
       final res = await http.get(url);
@@ -59,6 +61,29 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     }
   }
 
+  // Challenges für den Trip laden
+  Future<List<dynamic>> fetchChallenges() async {
+    final url = Uri.parse(
+      "${ApiConfig.baseUrl}/challenge/byTrip/${widget.tripId}",
+    );
+    final res = await http.get(url);
+
+    if (res.statusCode == 200) {
+      return jsonDecode(res.body) as List<dynamic>;
+    } else {
+      throw Exception('Fehler beim Laden der Challenges');
+    }
+  }
+
+  String formatDate(String date) {
+    try {
+      final parsedDate = DateTime.parse(date);
+      return DateFormat('dd.MM.yyyy').format(parsedDate);
+    } catch (e) {
+      return date;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final name = trip?["name"]?.toString() ?? "—";
@@ -66,6 +91,8 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     final startdatum = trip?["startdatum"]?.toString() ?? "—";
     final enddatum = trip?["enddatum"]?.toString() ?? "—";
 
+    final formattedStartdatum = formatDate(startdatum);
+    final formattedEnddatum = formatDate(enddatum);
     return Scaffold(
       appBar: AppBar(
         title: const Text("Trip Details"),
@@ -88,7 +115,6 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 8),
-
                     if (beschreibung.isNotEmpty) ...[
                       Text(beschreibung),
                       const SizedBox(height: 16),
@@ -96,9 +122,9 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
 
                     Row(
                       children: [
-                        Expanded(child: Text("Von: $startdatum")),
+                        Expanded(child: Text("Von: $formattedStartdatum")),
                         const SizedBox(width: 12),
-                        Expanded(child: Text("Bis: $enddatum")),
+                        Expanded(child: Text("Bis: $formattedEnddatum")),
                       ],
                     ),
 
@@ -106,22 +132,74 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                     const Divider(),
                     const SizedBox(height: 12),
 
-                    // Platz für M6: Challenge-Liste
+                    // Challenge-Liste
                     Text(
                       "Foto-Challenges",
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      "Hier kommt später die Challenge-Liste rein (M6).",
-                      style: TextStyle(fontStyle: FontStyle.italic),
+                    // Challenge-Liste aus FutureBuilder laden
+                    FutureBuilder<List<dynamic>>(
+                      future: _challengesFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: Text('Fehler: ${snapshot.error}'),
+                          );
+                        }
+
+                        final challenges = snapshot.data ?? [];
+
+                        if (challenges.isEmpty) {
+                          return const Center(
+                            child: Text("Noch keine Challenges"),
+                          );
+                        }
+
+                        return ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: challenges.length,
+                          separatorBuilder: (context, index) => const Divider(),
+                          itemBuilder: (context, index) {
+                            final challenge = challenges[index];
+                            final challengeName =
+                                challenge['titel'] ?? 'Unbenannt';
+                            final status = challenge['status'] ?? 'Unbekannt';
+
+                            return ListTile(
+                              title: Text(challengeName),
+                              subtitle: Text('Status: $status'),
+                              onTap: () {
+                                // Navigiere zur Challenge Detailseite und übergebe die challengeId
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ChallengeDetailScreen(
+                                      challengeId: challenge['id']
+                                          .toString(), // Übergebe die challengeId
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        );
+                      },
                     ),
                   ],
                 ),
               ),
       ),
 
-      // Platz für M4/M5: Challenge hinzufügen
+      // Challenge hinzufügen
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final saved = await Navigator.push<bool>(
@@ -130,6 +208,12 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
               builder: (context) => ChallengeAnlegen(tripId: widget.tripId),
             ),
           );
+          if (saved == true) {
+            // Lade die Challenges nach dem Hinzufügen einer neuen Challenge neu
+            setState(() {
+              _challengesFuture = fetchChallenges();
+            });
+          }
         },
         child: const Icon(Icons.add),
       ),
