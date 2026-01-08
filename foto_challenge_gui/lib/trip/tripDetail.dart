@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../config/apiConfig.dart';
+import 'package:foto_challenge_gui/challenge/challengeAnlegen.dart';
 
 class TripDetailScreen extends StatefulWidget {
   final String tripId;
@@ -122,10 +123,12 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
 
       // Platz für M4/M5: Challenge hinzufügen
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // später: Challenge hinzufügen
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("TODO: Challenge hinzufügen")),
+        onPressed: () async {
+          final saved = await Navigator.push<bool>(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ChallengeAnlegen(tripId: widget.tripId),
+            ),
           );
         },
         child: const Icon(Icons.add),
