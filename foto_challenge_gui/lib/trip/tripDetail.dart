@@ -1,9 +1,10 @@
-// lib/trip/tripDetail.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+
 import '../config/apiConfig.dart';
+import '../shared/photo_platform.dart';
 import '../challenge/challengeStore.dart';
 import '../challenge/challengeDetail.dart';
 
@@ -79,6 +80,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
         challengesLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         challengesError = "Fehler: $e";
         challengesLoading = false;
@@ -117,7 +119,6 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
             onPressed: () async {
               if (!(formKey.currentState?.validate() ?? false)) return;
 
-              // M4: Challenge hinzufügen (Titel Pflicht) :contentReference[oaicite:10]{index=10}
               await ChallengeStore.addChallenge(
                 tripId: widget.tripId,
                 title: controller.text,
@@ -133,7 +134,6 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     );
 
     if (created == true) {
-      // M5: danach in Liste sichtbar :contentReference[oaicite:11]{index=11}
       await _loadChallenges();
     }
   }
@@ -144,19 +144,25 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
       challengeId: c.id,
       done: !c.isDone,
     );
-    await _loadChallenges(); // M10 :contentReference[oaicite:12]{index=12}
+    await _loadChallenges();
   }
 
   Future<void> _pickAndAddPhoto(Challenge c) async {
     final picker = ImagePicker();
-    final xFile = await picker.pickImage(source: ImageSource.gallery);
+    final xFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70,
+      maxWidth: 1280,
+    );
     if (xFile == null) return;
 
-    // M7: Foto aus Galerie wählen und Challenge zuordnen :contentReference[oaicite:13]{index=13}
+    // Web -> data-url (base64), Mobile -> file path
+    final ref = await refFromPickedXFile(xFile);
+
     await ChallengeStore.addPhoto(
       tripId: widget.tripId,
       challengeId: c.id,
-      photoPath: xFile.path,
+      photoPath: ref,
     );
 
     if (!mounted) return;
@@ -218,7 +224,6 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                     const Divider(),
                     const SizedBox(height: 12),
 
-                    // M6: Challenge-Liste pro Trip anzeigen :contentReference[oaicite:14]{index=14}
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -248,7 +253,6 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                         itemBuilder: (context, i) {
                           final c = challenges[i];
 
-                          // M9: Titel + Status in Liste :contentReference[oaicite:15]{index=15}
                           return ListTile(
                             leading: Icon(
                               c.isDone
@@ -257,7 +261,8 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                             ),
                             title: Text(c.title),
                             subtitle: Text(
-                              "Status: ${c.isDone ? "erledigt" : "offen"}",
+                              "Status: ${c.isDone ? "erledigt" : "offen"}"
+                              " • Fotos: ${c.photoPaths.length}",
                             ),
                             onTap: () async {
                               await Navigator.push(
@@ -296,7 +301,6 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
               ),
       ),
 
-      // M4/M5: Challenge hinzufügen :contentReference[oaicite:16]{index=16}
       floatingActionButton: FloatingActionButton(
         onPressed: _createChallengeDialog,
         child: const Icon(Icons.add),

@@ -1,8 +1,7 @@
-// lib/challenge/challengeDetail.dart
-import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+
+import '../shared/photo_platform.dart';
 import 'challengeStore.dart';
 
 class ChallengeDetailScreen extends StatefulWidget {
@@ -46,6 +45,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
         if (c == null) error = "Challenge nicht gefunden.";
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         error = "Fehler: $e";
         loading = false;
@@ -64,23 +64,20 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
 
   Future<void> _addPhoto() async {
     final picker = ImagePicker();
-    final xFile = await picker.pickImage(source: ImageSource.gallery);
+    final xFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70,
+      maxWidth: 1280,
+    );
     if (xFile == null) return;
 
-    // Web: keine File-Pfade wie auf Android -> für Android Must passt das.
-    if (kIsWeb) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Foto-Upload am Web ist hier nicht implementiert."),
-        ),
-      );
-      return;
-    }
+    // WICHTIG: Web -> data-url (base64), Mobile -> file path
+    final ref = await refFromPickedXFile(xFile);
 
     await ChallengeStore.addPhoto(
       tripId: widget.tripId,
       challengeId: widget.challengeId,
-      photoPath: xFile.path,
+      photoPath: ref,
     );
 
     if (!mounted) return;
@@ -116,7 +113,6 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                   ),
                   const SizedBox(height: 8),
 
-                  // M9: Titel + Status anzeigen :contentReference[oaicite:6]{index=6}
                   Row(
                     children: [
                       Chip(label: Text(c.isDone ? "erledigt" : "offen")),
@@ -126,8 +122,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                           contentPadding: EdgeInsets.zero,
                           title: const Text("Als erledigt markieren"),
                           value: c.isDone,
-                          onChanged:
-                              _toggleDone, // M10 :contentReference[oaicite:7]{index=7}
+                          onChanged: _toggleDone,
                         ),
                       ),
                     ],
@@ -143,8 +138,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       ElevatedButton.icon(
-                        onPressed:
-                            _addPhoto, // M7 :contentReference[oaicite:8]{index=8}
+                        onPressed: _addPhoto,
                         icon: const Icon(Icons.photo),
                         label: const Text("Foto hinzufügen"),
                       ),
@@ -152,7 +146,6 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  // M8: Fotos anzeigen :contentReference[oaicite:9]{index=9}
                   Expanded(
                     child: c.photoPaths.isEmpty
                         ? const Center(
@@ -167,15 +160,13 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                                 ),
                             itemCount: c.photoPaths.length,
                             itemBuilder: (context, i) {
-                              final path = c.photoPaths[i];
+                              final photoRef = c.photoPaths[i];
+
                               return ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
-                                child: Image.file(
-                                  File(path),
+                                child: photoFromRef(
+                                  photoRef,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => const Center(
-                                    child: Icon(Icons.broken_image),
-                                  ),
                                 ),
                               );
                             },
