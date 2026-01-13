@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-
+import 'package:intl/intl.dart';
 import '../config/apiConfig.dart';
 import '../shared/photo_platform.dart';
 import '../challenge/challengeStore.dart';
@@ -171,6 +171,15 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     ).showSnackBar(const SnackBar(content: Text("Foto hinzugefügt.")));
   }
 
+  String formatDate(String date) {
+    try {
+      final parsedDate = DateTime.parse(date);
+      return DateFormat('dd.MM.yyyy').format(parsedDate);
+    } catch (e) {
+      return date;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final name = trip?["name"]?.toString() ?? "—";
@@ -180,6 +189,8 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
 
     final doneCount = challenges.where((c) => c.isDone).length;
 
+    final formattedStartdatum = formatDate(startdatum);
+    final formattedEnddatum = formatDate(enddatum);
     return Scaffold(
       appBar: AppBar(
         title: const Text("Trip Details"),
@@ -214,9 +225,9 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                     ],
                     Row(
                       children: [
-                        Expanded(child: Text("Von: $startdatum")),
+                        Expanded(child: Text("Von: $formattedStartdatum")),
                         const SizedBox(width: 12),
-                        Expanded(child: Text("Bis: $enddatum")),
+                        Expanded(child: Text("Bis: $formattedEnddatum")),
                       ],
                     ),
 
