@@ -7,6 +7,7 @@ import '../config/apiConfig.dart';
 import '../shared/photo_platform.dart';
 import '../challenge/challengeStore.dart';
 import '../challenge/challengeDetail.dart';
+import '../challenge/challengeTemplates.dart';
 
 class TripDetailScreen extends StatefulWidget {
   final String tripId;
@@ -98,16 +99,51 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
         title: const Text("Neue Challenge"),
         content: Form(
           key: formKey,
-          child: TextFormField(
-            controller: controller,
-            decoration: const InputDecoration(
-              labelText: "Titel",
-              hintText: "z. B. Fotografiere rote Objekte",
-            ),
-            validator: (v) {
-              if (v == null || v.trim().isEmpty) return "Titel ist Pflicht.";
-              return null;
-            },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: controller,
+                decoration: const InputDecoration(
+                  labelText: "Titel",
+                  hintText: "z. B. Fotografiere rote Objekte",
+                ),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return "Titel ist Pflicht.";
+                  return null;
+                },
+              ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  icon: const Icon(Icons.view_list),
+                  label: const Text("Aus Vorlagen"),
+                  onPressed: () async {
+                    final selected = await showModalBottomSheet<String>(
+                      context: ctx,
+                      builder: (sheetCtx) => SafeArea(
+                        child: ListView.separated(
+                          itemCount: ChallengeTemplates.items.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemBuilder: (_, i) {
+                            final t = ChallengeTemplates.items[i];
+                            return ListTile(
+                              title: Text(t),
+                              onTap: () => Navigator.pop(sheetCtx, t),
+                            );
+                          },
+                        ),
+                      ),
+                    );
+
+                    if (selected != null) {
+                      controller.text = selected; // User kann noch editieren
+                    }
+                  },
+                ),
+              ),
+            ],
           ),
         ),
         actions: [
