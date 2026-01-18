@@ -87,6 +87,42 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
     await _load();
   }
 
+  Future<void> _removePhotoAt(int index) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Foto entfernen?"),
+        content: const Text(
+          "Hiermit wird das Foto aus der Challenge gelöscht.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("Abbrechen"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text("Entfernen"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    await ChallengeStore.removePhotoAt(
+      tripId: widget.tripId,
+      challengeId: widget.challengeId,
+      index: index,
+    );
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Foto entfernt.")),
+    );
+    await _load();
+  }
+
   Future<void> _editTitle() async {
     final c = challenge;
     if (c == null) return;
@@ -231,9 +267,32 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
 
                               return ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
-                                child: photoFromRef(
-                                  photoRef,
-                                  fit: BoxFit.cover,
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    photoFromRef(photoRef, fit: BoxFit.cover),
+                                    Positioned(
+                                      top: 4,
+                                      right: 4,
+                                      child: Material(
+                                        color: Colors.black54,
+                                        shape: const CircleBorder(),
+                                        child: InkWell(
+                                          customBorder:
+                                          const CircleBorder(),
+                                          onTap: () => _removePhotoAt(i),
+                                          child: const Padding(
+                                            padding: EdgeInsets.all(6),
+                                            child: Icon(
+                                              Icons.close,
+                                              size: 18,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               );
                             },

@@ -136,6 +136,23 @@ class ChallengeStore {
     await _saveForTrip(tripId, list);
   }
 
+  static Future<void> removePhotoAt({
+    required String tripId,
+    required String challengeId,
+    required int index,
+  }) async {
+    final list = await listForTrip(tripId);
+    final idx = list.indexWhere((c) => c.id == challengeId);
+    if (idx < 0) return;
+
+    final photos = [...list[idx].photoPaths];
+    if (index < 0 || index >= photos.length) return;
+
+    photos.removeAt(index);
+    list[idx] = list[idx].copyWith(photoPaths: photos);
+    await _saveForTrip(tripId, list);
+  }
+
   static Future<void> deleteChallenge({
     required String tripId,
     required String challengeId,
