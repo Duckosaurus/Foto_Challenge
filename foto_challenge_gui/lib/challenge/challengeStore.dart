@@ -135,4 +135,22 @@ class ChallengeStore {
     list[idx] = list[idx].copyWith(photoPaths: updatedPhotos);
     await _saveForTrip(tripId, list);
   }
+
+  static Future<void> updateTitle({
+    required String tripId,
+    required String challengeId,
+    required String newTitle,
+  }) async {
+    final clean = newTitle.trim();
+    if (clean.isEmpty) {
+      throw Exception("Challenge-Titel darf nicht leer sein.");
+    }
+
+    final list = await listForTrip(tripId);
+    final idx = list.indexWhere((c) => c.id == challengeId);
+    if (idx < 0) return;
+
+    list[idx] = list[idx].copyWith(title: clean);
+    await _saveForTrip(tripId, list);
+  }
 }

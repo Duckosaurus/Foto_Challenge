@@ -87,6 +87,68 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
     await _load();
   }
 
+  Future<void> _editTitle() async {
+    final c = challenge;
+    if (c == null) return;
+
+    final controller = TextEditingController(text: c.title);
+    final formKey = GlobalKey<FormState>();
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Challenge-Titel bearbeiten"),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(labelText: "Titel"),
+            validator: (v) {
+              if (v == null || v.trim().isEmpty) return "Titel ist Pflicht.";
+              return null;
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("Abbrechen"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (!(formKey.currentState?.validate() ?? false)) return;
+
+              try {
+                await ChallengeStore.updateTitle(
+                  tripId: widget.tripId,
+                  challengeId: widget.challengeId,
+                  newTitle: controller.text,
+                );
+                if (!mounted) return;
+                Navigator.pop(ctx, true);
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Fehler: $e")),
+                );
+              }
+            },
+            child: const Text("Speichern"),
+          ),
+        ],
+      ),
+    );
+
+    if (saved == true) {
+      await _load();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Titel aktualisiert.")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = challenge;
@@ -95,6 +157,11 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
       appBar: AppBar(
         title: const Text("Challenge Details"),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            tooltip: "Titel bearbeiten",
+            onPressed: _editTitle,
+          ),
           IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
         ],
       ),
