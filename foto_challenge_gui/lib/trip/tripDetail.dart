@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../config/apiConfig.dart';
 import '../shared/photo_platform.dart';
 import '../challenge/challengeStore.dart';
@@ -183,16 +184,43 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     await _loadChallenges();
   }
 
+  Future<ImageSource?> _chooseImageSource() async {
+    if (kIsWeb) return ImageSource.gallery;
+
+    return showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo),
+              title: const Text("Galerie"),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_camera),
+              title: const Text("Kamera"),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _pickAndAddPhoto(Challenge c) async {
+    final source = await _chooseImageSource();
+    if (source == null) return;
+
     final picker = ImagePicker();
     final xFile = await picker.pickImage(
-      source: ImageSource.gallery,
+      source: source,
       imageQuality: 70,
       maxWidth: 1280,
     );
     if (xFile == null) return;
 
-    // Web -> data-url (base64), Mobile -> file path
     final ref = await refFromPickedXFile(xFile);
 
     await ChallengeStore.addPhoto(
@@ -202,9 +230,17 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     );
 
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("Foto hinzugefügt.")));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          source == ImageSource.camera
+              ? "Foto aufgenommen und hinzugefügt."
+              : "Foto hinzugefügt.",
+        ),
+      ),
+    );
+
+    await _loadChallenges();
   }
 
   Future<void> _deleteChallenge(Challenge c) async {
