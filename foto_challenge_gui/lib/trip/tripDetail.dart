@@ -171,6 +171,41 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     ).showSnackBar(const SnackBar(content: Text("Foto hinzugefügt.")));
   }
 
+  Future<void> _deleteChallenge(Challenge c) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Challenge löschen?"),
+        content: Text("„${c.title}“ wird aus diesem Trip entfernt."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("Abbrechen"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text("Löschen"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    await ChallengeStore.deleteChallenge(
+      tripId: widget.tripId,
+      challengeId: c.id,
+    );
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Challenge gelöscht.")),
+    );
+
+    await _loadChallenges();
+  }
+
   String formatDate(String date) {
     try {
       final parsedDate = DateTime.parse(date);
@@ -301,6 +336,11 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                                     c.isDone ? Icons.undo : Icons.done,
                                   ),
                                   onPressed: () => _toggleDone(c),
+                                ),
+                                IconButton(
+                                  tooltip: "Challenge löschen",
+                                  icon: const Icon(Icons.delete),
+                                  onPressed: () => _deleteChallenge(c),
                                 ),
                               ],
                             ),

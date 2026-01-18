@@ -136,6 +136,18 @@ class ChallengeStore {
     await _saveForTrip(tripId, list);
   }
 
+  static Future<void> deleteChallenge({
+    required String tripId,
+    required String challengeId,
+  }) async {
+    final list = await listForTrip(tripId);
+    final newList = list.where((c) => c.id != challengeId).toList();
+
+    if (newList.length == list.length) return;
+
+    await _saveForTrip(tripId, newList);
+  }
+
   static Future<void> updateTitle({
     required String tripId,
     required String challengeId,
