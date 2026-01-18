@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../shared/photo_platform.dart';
 import 'challengeStore.dart';
+import 'challengeTemplateStore.dart';
 
 class ChallengeDetailScreen extends StatefulWidget {
   final String tripId;
@@ -218,6 +219,66 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
     }
   }
 
+  Future<void> _saveAsTemplate() async {
+    final c = challenge;
+    if (c == null) return;
+
+    final controller = TextEditingController(text: c.title);
+    final formKey = GlobalKey<FormState>();
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Als Vorlage speichern"),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(labelText: "Vorlagen-Titel"),
+            validator: (v) {
+              if (v == null || v.trim().isEmpty) return "Titel ist Pflicht.";
+              return null;
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("Abbrechen"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (!(formKey.currentState?.validate() ?? false)) return;
+              Navigator.pop(ctx, true);
+            },
+            child: const Text("Speichern"),
+          ),
+        ],
+      ),
+    );
+
+    if (ok != true) return;
+
+    try {
+      final added = await ChallengeTemplateStore.add(controller.text);
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            added ? "Vorlage gespeichert." : "Vorlage existiert bereits.",
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Fehler: $e")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = challenge;
@@ -230,6 +291,11 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
             icon: const Icon(Icons.edit),
             tooltip: "Titel bearbeiten",
             onPressed: _editTitle,
+          ),
+          IconButton(
+            tooltip: "Als Vorlage speichern",
+            icon: const Icon(Icons.bookmark_add),
+            onPressed: _saveAsTemplate,
           ),
           IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
         ],

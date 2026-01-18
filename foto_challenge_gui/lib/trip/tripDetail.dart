@@ -9,6 +9,7 @@ import '../shared/photo_platform.dart';
 import '../challenge/challengeStore.dart';
 import '../challenge/challengeDetail.dart';
 import '../challenge/challengeTemplates.dart';
+import '../challenge/challengeTemplateStore.dart';
 
 class TripDetailScreen extends StatefulWidget {
   final String tripId;
@@ -124,19 +125,60 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                     final selected = await showModalBottomSheet<String>(
                       context: ctx,
                       builder: (sheetCtx) => SafeArea(
-                        child: ListView.separated(
-                          itemCount: ChallengeTemplates.items.length,
-                          separatorBuilder: (_, __) => const Divider(height: 1),
-                          itemBuilder: (_, i) {
-                            final t = ChallengeTemplates.items[i];
-                            return ListTile(
-                              title: Text(t),
-                              onTap: () => Navigator.pop(sheetCtx, t),
+                        child: FutureBuilder<List<String>>(
+                          future: ChallengeTemplateStore.list(),
+                          builder: (context, snap) {
+                            final saved = snap.data ?? const <String>[];
+                            final builtIn = ChallengeTemplates.items;
+
+                            return ListView(
+                              children: [
+                                const ListTile(
+                                  title: Text("Standard App Vorlagen"),
+                                  dense: true,
+                                ),
+                                ...builtIn.map((t) => ListTile(
+                                  title: Text(t),
+                                  onTap: () => Navigator.pop(sheetCtx, t),
+                                )),
+                                if (saved.isNotEmpty) const Divider(height: 16),
+                                if (saved.isNotEmpty)
+                                  const ListTile(
+                                    title: Text("Eigene Vorlagen"),
+                                    dense: true,
+                                  ),
+                                ...saved.map((t) => ListTile(
+                                  title: Text(t),
+                                  trailing: IconButton(
+                                    tooltip: "Vorlage entfernen",
+                                    icon: const Icon(Icons.delete_outline),
+                                    onPressed: () async {
+                                      await ChallengeTemplateStore.remove(t);
+                                      // Sheet neu bauen:
+                                      if (Navigator.canPop(sheetCtx)) {
+                                        Navigator.pop(sheetCtx); // schließt Sheet
+                                      }
+                                      // optional: direkt wieder öffnen wäre möglich, aber nicht nötig
+                                    },
+                                  ),
+                                  onTap: () => Navigator.pop(sheetCtx, t),
+                                )),
+                                if (snap.connectionState == ConnectionState.waiting)
+                                  const Padding(
+                                    padding: EdgeInsets.all(16),
+                                    child: Center(child: CircularProgressIndicator()),
+                                  ),
+                              ],
                             );
                           },
                         ),
                       ),
                     );
+
+                    if (selected != null) {
+                      controller.text = selected; // User kann noch ändern
+                    }
+
 
                     if (selected != null) {
                       controller.text = selected; // User kann noch editieren
