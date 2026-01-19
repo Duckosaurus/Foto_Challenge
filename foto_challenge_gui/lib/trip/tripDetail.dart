@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../config/apiConfig.dart';
 import '../shared/photo_platform.dart';
 import '../challenge/challengeStore.dart';
 import '../challenge/challengeDetail.dart';
+import '../challenge/challengeTemplates.dart';
+import '../challenge/challengeTemplateStore.dart';
 
 class TripDetailScreen extends StatefulWidget {
   final String tripId;
@@ -98,16 +101,92 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
         title: const Text("Neue Challenge"),
         content: Form(
           key: formKey,
-          child: TextFormField(
-            controller: controller,
-            decoration: const InputDecoration(
-              labelText: "Titel",
-              hintText: "z. B. Fotografiere rote Objekte",
-            ),
-            validator: (v) {
-              if (v == null || v.trim().isEmpty) return "Titel ist Pflicht.";
-              return null;
-            },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: controller,
+                decoration: const InputDecoration(
+                  labelText: "Titel",
+                  hintText: "z. B. Fotografiere rote Objekte",
+                ),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return "Titel ist Pflicht.";
+                  return null;
+                },
+              ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  icon: const Icon(Icons.view_list),
+                  label: const Text("Aus Vorlagen"),
+                  onPressed: () async {
+                    final selected = await showModalBottomSheet<String>(
+                      context: ctx,
+                      builder: (sheetCtx) => SafeArea(
+                        child: FutureBuilder<List<String>>(
+                          future: ChallengeTemplateStore.list(),
+                          builder: (context, snap) {
+                            final saved = snap.data ?? const <String>[];
+                            final builtIn = ChallengeTemplates.items;
+
+                            return ListView(
+                              children: [
+                                const ListTile(
+                                  title: Text("Standard App Vorlagen"),
+                                  dense: true,
+                                ),
+                                ...builtIn.map((t) => ListTile(
+                                  title: Text(t),
+                                  onTap: () => Navigator.pop(sheetCtx, t),
+                                )),
+                                if (saved.isNotEmpty) const Divider(height: 16),
+                                if (saved.isNotEmpty)
+                                  const ListTile(
+                                    title: Text("Eigene Vorlagen"),
+                                    dense: true,
+                                  ),
+                                ...saved.map((t) => ListTile(
+                                  title: Text(t),
+                                  trailing: IconButton(
+                                    tooltip: "Vorlage entfernen",
+                                    icon: const Icon(Icons.delete_outline),
+                                    onPressed: () async {
+                                      await ChallengeTemplateStore.remove(t);
+                                      // Sheet neu bauen:
+                                      if (Navigator.canPop(sheetCtx)) {
+                                        Navigator.pop(sheetCtx); // schließt Sheet
+                                      }
+                                      // optional: direkt wieder öffnen wäre möglich, aber nicht nötig
+                                    },
+                                  ),
+                                  onTap: () => Navigator.pop(sheetCtx, t),
+                                )),
+                                if (snap.connectionState == ConnectionState.waiting)
+                                  const Padding(
+                                    padding: EdgeInsets.all(16),
+                                    child: Center(child: CircularProgressIndicator()),
+                                  ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    );
+
+                    if (selected != null) {
+                      controller.text = selected; // User kann noch ändern
+                    }
+
+
+                    if (selected != null) {
+                      controller.text = selected; // User kann noch editieren
+                    }
+                  },
+                ),
+              ),
+            ],
           ),
         ),
         actions: [
@@ -147,16 +226,43 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     await _loadChallenges();
   }
 
+  Future<ImageSource?> _chooseImageSource() async {
+    if (kIsWeb) return ImageSource.gallery;
+
+    return showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo),
+              title: const Text("Galerie"),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_camera),
+              title: const Text("Kamera"),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _pickAndAddPhoto(Challenge c) async {
+    final source = await _chooseImageSource();
+    if (source == null) return;
+
     final picker = ImagePicker();
     final xFile = await picker.pickImage(
-      source: ImageSource.gallery,
+      source: source,
       imageQuality: 70,
       maxWidth: 1280,
     );
     if (xFile == null) return;
 
-    // Web -> data-url (base64), Mobile -> file path
     final ref = await refFromPickedXFile(xFile);
 
     await ChallengeStore.addPhoto(
@@ -166,9 +272,52 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     );
 
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("Foto hinzugefügt.")));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          source == ImageSource.camera
+              ? "Foto aufgenommen und hinzugefügt."
+              : "Foto hinzugefügt.",
+        ),
+      ),
+    );
+
+    await _loadChallenges();
+  }
+
+  Future<void> _deleteChallenge(Challenge c) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Challenge löschen?"),
+        content: Text("„${c.title}“ wird aus diesem Trip entfernt."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("Abbrechen"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text("Löschen"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    await ChallengeStore.deleteChallenge(
+      tripId: widget.tripId,
+      challengeId: c.id,
+    );
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Challenge gelöscht.")),
+    );
+
+    await _loadChallenges();
   }
 
   String formatDate(String date) {
@@ -301,6 +450,11 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                                     c.isDone ? Icons.undo : Icons.done,
                                   ),
                                   onPressed: () => _toggleDone(c),
+                                ),
+                                IconButton(
+                                  tooltip: "Challenge löschen",
+                                  icon: const Icon(Icons.delete),
+                                  onPressed: () => _deleteChallenge(c),
                                 ),
                               ],
                             ),
