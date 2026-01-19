@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import '../shared/photo_platform.dart';
 import 'challengeStore.dart';
 import 'challengeTemplateStore.dart';
+import 'collageScreen.dart';
 
 class ChallengeDetailScreen extends StatefulWidget {
   final String tripId;
@@ -343,6 +344,20 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                         onPressed: _addPhoto,
                         icon: const Icon(Icons.photo),
                         label: const Text("Foto hinzufügen"),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: (c.photoPaths.length < 2)
+                            ? null
+                            : () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => CollageScreen(photoRefs: c.photoPaths),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.grid_on),
+                        label: const Text("Kollage"),
                       ),
                     ],
                   ),
